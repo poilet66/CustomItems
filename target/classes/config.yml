@@ -1,0 +1,10 @@
+#SNOWBALL custom item
+SNOWBALL:
+  Material: SNOWBALL
+  DisplayName: "&4Snowball"
+  Lore:
+    - "&dIts a snowball"
+    - "&eIt is &cindeed"
+  #Maximum distance the snowball will work over, set to -1 if infinite
+  MaxDistance: -1
+  Cooldown: 10
