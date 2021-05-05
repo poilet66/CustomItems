@@ -7,7 +7,9 @@ import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.configuration.file.FileConfiguration;
+import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.persistence.PersistentDataType;
@@ -24,6 +26,7 @@ public abstract class CustomItemBase {
     private ItemStack item;
     private CustomItemType type;
     private String customID;
+    private boolean enchantGlint;
 
     //Possible parameters
     private int cooldownLength;
@@ -73,6 +76,11 @@ public abstract class CustomItemBase {
         return this.customID;
     }
 
+    private boolean getEnchantGlintFromConfig(String itemID) {
+        FileConfiguration config = main.getConfig();
+        return config.getBoolean(itemID + ".Enchanted", false);
+    }
+
     private ItemStack generateItemFromConfig(String itemID) {
         FileConfiguration config = main.getConfig();
         if(config.get(itemID) == null) {
@@ -92,6 +100,10 @@ public abstract class CustomItemBase {
                     //formattedLore.add(ChatColor.translateAlternateColorCodes('&', line));
                 }
                 meta.setLore(formattedLore);
+            }
+            if(getEnchantGlintFromConfig(itemID)) {
+                meta.addEnchant(Enchantment.DURABILITY, 0, true);
+                meta.addItemFlags(ItemFlag.HIDE_ENCHANTS);
             }
             meta.getPersistentDataContainer().set(ItemRegister.itemIDKey, PersistentDataType.STRING, itemID);
             ret.setItemMeta(meta);

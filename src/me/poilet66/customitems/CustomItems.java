@@ -4,7 +4,10 @@ import me.poilet66.customitems.Command.GiveItemCommand;
 import me.poilet66.customitems.Listener.ItemUseListener;
 import me.poilet66.customitems.PAPI.CustomItemsExpansion;
 import org.bukkit.Bukkit;
+import org.bukkit.enchantments.Enchantment;
 import org.bukkit.plugin.java.JavaPlugin;
+
+import java.lang.reflect.Field;
 
 public class CustomItems extends JavaPlugin {
 

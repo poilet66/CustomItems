@@ -1,10 +1,13 @@
 #SNOWBALL custom item
 SNOWBALL:
   Material: SNOWBALL
-  DisplayName: "&4Snowball"
+  DisplayName: "&6&lSnowball"
   Lore:
-    - "&dIts a snowball"
-    - "&eIt is &cindeed"
+    - "&7Hit a player within 7"
+    - "&7blocks to switch with them."
   #Maximum distance the snowball will work over, set to -1 if infinite
   MaxDistance: -1
+  #Ability cooldown usage should give
   Cooldown: 10
+  #Whether the item should have an enchant glint
+  Enchanted: true

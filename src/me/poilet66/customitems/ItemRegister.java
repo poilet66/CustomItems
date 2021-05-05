@@ -3,16 +3,18 @@ package me.poilet66.customitems;
 import me.poilet66.customitems.Items.CustomAttackItem;
 import me.poilet66.customitems.Items.CustomItemBase;
 import me.poilet66.customitems.Items.CustomProjectileItem;
-import me.poilet66.customitems.Objects.CustomAbilityEvent;
+import me.poilet66.customitems.API.CustomAbilityEvent;
 import me.poilet66.customitems.Utils.Utils;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
+import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.Snowball;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.ProjectileHitEvent;
+import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.persistence.PersistentDataType;
@@ -40,10 +42,38 @@ public class ItemRegister {
 
         ItemStack ingotItem = new ItemStack(Material.IRON_INGOT);
         ItemMeta meta = ingotItem.getItemMeta();
+        meta.addEnchant(Enchantment.DURABILITY, 1, true);
+        meta.addItemFlags(ItemFlag.HIDE_ENCHANTS);
         meta.getPersistentDataContainer().set(ItemRegister.itemIDKey, PersistentDataType.STRING, "INGOT");
         ingotItem.setItemMeta(meta);
 
         registerItem(new CustomAttackItem("INGOT", ingotItem) {
+
+            @Override
+            public void onUse(EntityDamageByEntityEvent event) {
+                if(!(event.getDamager() instanceof Player)) {
+                    return;
+                }
+                Player player = (Player) event.getDamager();
+                if(isInstanceOf(player.getInventory().getItemInMainHand())) {
+                    player.sendMessage(ChatColor.RED + "Wagwan babes");
+                }
+            }
+
+            @Override
+            public void onRegister() {
+
+            }
+        });
+
+        //Add test ingot
+
+        ItemStack barItem = new ItemStack(Material.GOLD_INGOT);
+        ItemMeta barmeta = barItem.getItemMeta();
+        barmeta.getPersistentDataContainer().set(ItemRegister.itemIDKey, PersistentDataType.STRING, "BAR");
+        barItem.setItemMeta(barmeta);
+
+        registerItem(new CustomAttackItem("BAR", barItem) {
 
             @Override
             public void onUse(EntityDamageByEntityEvent event) {
@@ -144,7 +174,11 @@ public class ItemRegister {
                     return;
                 }
                 Snowball snowball = (Snowball) event.getDamager();
-                if(isInstanceOf(snowball.getItem())) {
+                if(!(snowball.getShooter() instanceof  Player)) {
+                    return;
+                }
+                Player player = (Player) snowball.getShooter();
+                if(isInstanceOf(snowball.getItem()) && main.getCM().hasCooldown(player)) {
                     event.setCancelled(true);
                 }
             }
@@ -155,6 +189,7 @@ public class ItemRegister {
                 getCooldownFromConfig();
             }
         });
+
 
     }
 

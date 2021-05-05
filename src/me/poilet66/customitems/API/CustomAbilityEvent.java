@@ -1,4 +1,4 @@
-package me.poilet66.customitems.Objects;
+package me.poilet66.customitems.API;
 
 import me.poilet66.customitems.Items.CustomItemBase;
 import org.bukkit.entity.Player;
