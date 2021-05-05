@@ -21,7 +21,7 @@ public abstract class CustomItemBase {
 
     private final CustomItems main = (CustomItems) Bukkit.getPluginManager().getPlugin("CustomItems"); //TODO: HeebieJeebies
 
-    private static ItemStack item;
+    private ItemStack item;
     private CustomItemType type;
     private String customID;
 

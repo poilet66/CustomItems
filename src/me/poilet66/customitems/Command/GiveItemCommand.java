@@ -37,10 +37,6 @@ public class GiveItemCommand implements CommandExecutor {
             sender.sendMessage(ChatColor.RED + "The amount you have entered is not a number");
         }
 
-        for(Map.Entry<String, CustomItemBase> entry : main.getIR().newItemMap.entrySet()) {
-            sender.sendMessage(String.format("%s : %s", entry.getKey(), entry.getValue().getItem().getType()));
-        }
-
         ItemStack itemToSet = main.getIR().newItemMap.get(args[0].toUpperCase()).getItem();
 
         player.getInventory().setItem(0, itemToSet);

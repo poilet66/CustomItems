@@ -9,7 +9,6 @@ import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
-import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.Snowball;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
@@ -157,42 +156,11 @@ public class ItemRegister {
             }
         });
 
-        //Add test ingot
-
-        ItemStack barItem = new ItemStack(Material.GOLD_INGOT);
-        ItemMeta barmeta = barItem.getItemMeta();
-        barmeta.getPersistentDataContainer().set(ItemRegister.itemIDKey, PersistentDataType.STRING, "BAR");
-        barItem.setItemMeta(barmeta);
-
-        registerItem(new CustomAttackItem("BAR", barItem) {
-
-            @Override
-            public void onUse(EntityDamageByEntityEvent event) {
-                if(!(event.getDamager() instanceof Player)) {
-                    return;
-                }
-                Player player = (Player) event.getDamager();
-                if(isInstanceOf(player.getInventory().getItemInMainHand())) {
-                    player.sendMessage(ChatColor.RED + "Wagwan babes");
-                }
-            }
-
-            @Override
-            public void onRegister() {
-
-            }
-        });
-
-
     }
 
     private void registerItem(CustomItemBase customItem) {
-        newItemMap.putIfAbsent(customItem.getID(), customItem);
-        //newItemMap.put(customItem.getID(), customItem);
-        Bukkit.getLogger().info(String.format("adding %s : %s to newItemMap", customItem.getID(), customItem.getItem().getType()));
-        //itemMap.put(customItem.getItem(), customItem);
-        itemMap.putIfAbsent(customItem.getItem(), customItem);
-        Bukkit.getLogger().info(String.format("adding %s : %s to itemMap", customItem.getID(), customItem.getItem().getType()));
+        newItemMap.put(customItem.getID(), customItem);
+        itemMap.put(customItem.getItem(), customItem);
     }
 
 }
