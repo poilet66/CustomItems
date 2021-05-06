@@ -8,6 +8,6 @@ SNOWBALL:
   #Maximum distance the snowball will work over, set to -1 if infinite
   MaxDistance: -1
   #Ability cooldown usage should give
-  Cooldown: 10
+  Cooldown: 15
   #Whether the item should have an enchant glint
   Enchanted: true

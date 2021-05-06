@@ -3,7 +3,7 @@ main: me.poilet66.customitems.CustomItems
 version: 1.0.0
 api-version: 1.16
 author: poilet66
-softdepend: [PlaceholderAPI, MVdWPlaceholderAPI]
+softdepend: [PlaceholderAPI, MVdWPlaceholderAPI, PlayerParticles]
 
 commands:
   giveitem:

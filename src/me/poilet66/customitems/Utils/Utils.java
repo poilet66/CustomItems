@@ -1,6 +1,7 @@
 package me.poilet66.customitems.Utils;
 
 import org.bukkit.Location;
+import org.bukkit.Particle;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
@@ -29,6 +30,41 @@ public class Utils {
             continue;
         }
         return -1;
+    }
+
+    public static void setAtFirst(Player player, ItemStack item) {
+        int amountLeftToGive = item.getAmount();
+        Inventory inv = player.getInventory();
+        for(int slot = 0; slot < inv.getSize(); slot++) {
+            if(inv.getItem(slot) != null) {
+                if(inv.getItem(slot).isSimilar(item)) {
+                    int amountToFill = inv.getItem(slot).getType().getMaxStackSize() - inv.getItem(slot).getAmount();
+                    if(amountToFill == 0) { //if full stack
+                        continue;
+                    }
+                    if(inv.getItem(slot).getAmount() + amountLeftToGive < inv.getItem(slot).getType().getMaxStackSize()) {
+                        inv.getItem(slot).setAmount(inv.getItem(slot).getAmount() + amountLeftToGive);
+                        player.updateInventory();
+                        return;
+                    }
+                    if(inv.getItem(slot).getAmount() + amountLeftToGive > inv.getItem(slot).getType().getMaxStackSize()) {
+                        int oldAmount = inv.getItem(slot).getAmount();
+                        inv.getItem(slot).setAmount(inv.getItem(slot).getMaxStackSize());
+                        player.updateInventory();
+                        amountLeftToGive -= (inv.getItem(slot).getMaxStackSize() - oldAmount);
+                    }
+                }
+            }
+        }
+        //if still items to give
+        if(amountLeftToGive > 0) {
+            item.setAmount(amountLeftToGive);
+            if(player.getInventory().firstEmpty() != -1) {
+                player.getInventory().setItem(player.getInventory().firstEmpty(), item);
+                return;
+            }
+            player.getLocation().getWorld().dropItemNaturally(player.getLocation(), item);
+        }
     }
 
     /**

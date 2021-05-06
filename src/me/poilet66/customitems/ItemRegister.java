@@ -1,5 +1,8 @@
 package me.poilet66.customitems;
 
+import dev.esophose.playerparticles.api.PlayerParticlesAPI;
+import dev.esophose.playerparticles.particles.ParticleEffect;
+import dev.esophose.playerparticles.styles.ParticleStyle;
 import me.poilet66.customitems.Items.CustomAttackItem;
 import me.poilet66.customitems.Items.CustomItemBase;
 import me.poilet66.customitems.Items.CustomProjectileItem;
@@ -9,11 +12,13 @@ import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
+import org.bukkit.block.data.type.Snow;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.Snowball;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.ProjectileHitEvent;
+import org.bukkit.event.entity.ProjectileLaunchEvent;
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
@@ -118,15 +123,15 @@ public class ItemRegister {
                     return;
                 }
                 Snowball projectile = (Snowball) event.getEntity();
-                //if not a custom snowball
-                if(!(this.isInstanceOf(projectile.getItem())))  {
-                    return;
-                }
                 //if not thrown by player
                 if(!(projectile.getShooter() instanceof Player)) {
                     return;
                 }
                 Player shooter = (Player) projectile.getShooter();
+                //if not a custom snowball
+                if(!(this.isInstanceOf(projectile.getItem())))  {
+                    return;
+                }
                 //if didnt hit a player
                 if(event.getHitEntity() == null) {
                     refundItem(shooter);
@@ -139,14 +144,14 @@ public class ItemRegister {
                     return;
                 }
                 Player victim = (Player) event.getHitEntity();
-                //If not on cooldown
-                if(main.getCM().hasCooldown(shooter)) {
+                //If on cooldown
+                /*if(main.getCM().hasCooldown(shooter)) {
                     float expireTimeLeft = (main.getCM().getCooldownExpireTime(shooter) - System.currentTimeMillis()) / 1000f;
                     shooter.sendMessage(String.format(ChatColor.RED + "You are still on ability item cooldown for %s%.1f%s seconds", ChatColor.YELLOW, expireTimeLeft, ChatColor.RED));
                     refundItem(shooter);
                     return;
-                }
-                //If in range
+                }*/
+                //If not in range
                 if(Math.abs(Utils.getDistanceBetween(shooter, victim)) > maxDistance && maxDistance != -1) {
                     shooter.sendMessage(String.format(ChatColor.RED + "You were too far away, max distance is %s and you were %.1f blocks away", maxDistance, Utils.getDistanceBetween(shooter, victim)));
                     refundItem(shooter);
@@ -162,10 +167,18 @@ public class ItemRegister {
                 shooter.sendMessage(String.format(ChatColor.GREEN + "You switched places with %s", victim.getDisplayName()));
                 victim.sendMessage(ChatColor.YELLOW + "Someone switched places with you!");
                 Utils.switchPosition(shooter, victim); //TODO: Give both players particle effect (Random Tube Around Player)
-                //Add cooldown if not infinite
-                if(cooldown != -1L) {
-                    main.getCM().addPlayerCooldown(shooter, cooldown * 1000L);
+                PlayerParticlesAPI ppAPI = main.getPpAPI();
+                if(ppAPI != null) {
+                    ppAPI.addActivePlayerParticle(victim, ParticleEffect.WITCH, ParticleStyle.fromName("sphere"));
+                    ppAPI.addActivePlayerParticle(shooter, ParticleEffect.WITCH, ParticleStyle.fromName("sphere"));
                 }
+                Bukkit.getScheduler().runTaskLater(main, new Runnable() {
+                    @Override
+                    public void run() {
+                        ppAPI.removeActivePlayerParticles(victim, ParticleEffect.WITCH);
+                        ppAPI.removeActivePlayerParticles(shooter, ParticleEffect.WITCH);
+                    }
+                }, 10L);
             }
 
             @Override
@@ -180,6 +193,31 @@ public class ItemRegister {
                 Player player = (Player) snowball.getShooter();
                 if(isInstanceOf(snowball.getItem()) && main.getCM().hasCooldown(player)) {
                     event.setCancelled(true);
+                }
+            }
+
+            @Override
+            public void onThrow(ProjectileLaunchEvent event) {
+                if(!(event.getEntity() instanceof Snowball)) {
+                    return;
+                }
+                Snowball snowball = (Snowball) event.getEntity();
+                if(!(snowball.getShooter() instanceof Player)) {
+                    return;
+                }
+                Player shooter = (Player) snowball.getShooter();
+                if(!isInstanceOf(snowball.getItem())) {
+                    return;
+                }
+                if(main.getCM().hasCooldown(shooter)) {
+                    float expireTimeLeft = (main.getCM().getCooldownExpireTime(shooter) - System.currentTimeMillis()) / 1000f;
+                    shooter.sendMessage(String.format(ChatColor.RED + "You are still on ability item cooldown for %s%.1f%s seconds", ChatColor.YELLOW, expireTimeLeft, ChatColor.RED));
+                    event.setCancelled(true);
+                    return;
+                }
+                //Add cooldown if not infinite
+                if(cooldown != -1L) {
+                    main.getCM().addPlayerCooldown(shooter, cooldown * 1000L);
                 }
             }
 
