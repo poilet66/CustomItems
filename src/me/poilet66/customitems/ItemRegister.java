@@ -1,19 +1,20 @@
 package me.poilet66.customitems;
 
 import dev.esophose.playerparticles.api.PlayerParticlesAPI;
+import dev.esophose.playerparticles.particles.FixedParticleEffect;
+import dev.esophose.playerparticles.particles.PPlayer;
 import dev.esophose.playerparticles.particles.ParticleEffect;
+import dev.esophose.playerparticles.particles.ParticlePair;
+import dev.esophose.playerparticles.styles.DefaultStyles;
 import dev.esophose.playerparticles.styles.ParticleStyle;
 import me.poilet66.customitems.Items.CustomAttackItem;
 import me.poilet66.customitems.Items.CustomItemBase;
 import me.poilet66.customitems.Items.CustomProjectileItem;
 import me.poilet66.customitems.API.CustomAbilityEvent;
 import me.poilet66.customitems.Utils.Utils;
-import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
-import org.bukkit.Material;
-import org.bukkit.NamespacedKey;
-import org.bukkit.block.data.type.Snow;
+import org.bukkit.*;
 import org.bukkit.enchantments.Enchantment;
+import org.bukkit.entity.EnderPearl;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.Snowball;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
@@ -97,23 +98,15 @@ public class ItemRegister {
             }
         });
 
-        registerItem(new CustomProjectileItem("SNOWBALL") { //TODO: amount of hits, enchant glint
+        registerItem(new CustomProjectileItem("SWITCHER") { //TODO: amount of hits
 
             private int maxDistance; //default config value will be used if no value is set
-            private Long cooldown;
 
             private void getMaxDistanceFromConfig() {
                 if(main.getConfig().getInt(this.getID() + ".MaxDistance") == 0) { //if a cooldown has been set in config
                     return;
                 }
                 this.maxDistance = main.getConfig().getInt(this.getID() + ".MaxDistance");
-            }
-
-            private void getCooldownFromConfig() {
-                if(main.getConfig().getInt(this.getID() + ".Cooldown") == 0) { //if a cooldown has been set in config
-                    return;
-                }
-                this.cooldown = main.getConfig().getLong(this.getID() + ".Cooldown");
             }
 
             @Override
@@ -144,13 +137,6 @@ public class ItemRegister {
                     return;
                 }
                 Player victim = (Player) event.getHitEntity();
-                //If on cooldown
-                /*if(main.getCM().hasCooldown(shooter)) {
-                    float expireTimeLeft = (main.getCM().getCooldownExpireTime(shooter) - System.currentTimeMillis()) / 1000f;
-                    shooter.sendMessage(String.format(ChatColor.RED + "You are still on ability item cooldown for %s%.1f%s seconds", ChatColor.YELLOW, expireTimeLeft, ChatColor.RED));
-                    refundItem(shooter);
-                    return;
-                }*/
                 //If not in range
                 if(Math.abs(Utils.getDistanceBetween(shooter, victim)) > maxDistance && maxDistance != -1) {
                     shooter.sendMessage(String.format(ChatColor.RED + "You were too far away, max distance is %s and you were %.1f blocks away", maxDistance, Utils.getDistanceBetween(shooter, victim)));
@@ -166,19 +152,21 @@ public class ItemRegister {
                 //Do the thing
                 shooter.sendMessage(String.format(ChatColor.GREEN + "You switched places with %s", victim.getDisplayName()));
                 victim.sendMessage(ChatColor.YELLOW + "Someone switched places with you!");
-                Utils.switchPosition(shooter, victim); //TODO: Give both players particle effect (Random Tube Around Player)
-                PlayerParticlesAPI ppAPI = main.getPpAPI();
-                if(ppAPI != null) {
-                    ppAPI.addActivePlayerParticle(victim, ParticleEffect.WITCH, ParticleStyle.fromName("sphere"));
-                    ppAPI.addActivePlayerParticle(shooter, ParticleEffect.WITCH, ParticleStyle.fromName("sphere"));
+                Utils.switchPosition(shooter, victim);
+
+                if(Bukkit.getPluginManager().isPluginEnabled("PlayerParticles")) {
+                    PlayerParticlesAPI ppAPI = PlayerParticlesAPI.getInstance();
+                    ppAPI.addActivePlayerParticle(victim, ParticleEffect.WITCH, DefaultStyles.SPHERE);
+                    ppAPI.addActivePlayerParticle(shooter, ParticleEffect.WITCH, DefaultStyles.SPHERE);
+
+                    Bukkit.getScheduler().runTaskLater(main, new Runnable() {
+                        @Override
+                        public void run() {
+                            ppAPI.removeActivePlayerParticles(victim, ParticleEffect.WITCH);
+                            ppAPI.removeActivePlayerParticles(shooter, ParticleEffect.WITCH);
+                        }
+                    }, 10L);
                 }
-                Bukkit.getScheduler().runTaskLater(main, new Runnable() {
-                    @Override
-                    public void run() {
-                        ppAPI.removeActivePlayerParticles(victim, ParticleEffect.WITCH);
-                        ppAPI.removeActivePlayerParticles(shooter, ParticleEffect.WITCH);
-                    }
-                }, 10L);
             }
 
             @Override
@@ -216,7 +204,7 @@ public class ItemRegister {
                     return;
                 }
                 //Add cooldown if not infinite
-                if(cooldown != -1L) {
+                if(this.cooldown != -1L) {
                     main.getCM().addPlayerCooldown(shooter, cooldown * 1000L);
                 }
             }
@@ -224,6 +212,95 @@ public class ItemRegister {
             @Override
             public void onRegister() {
                 getMaxDistanceFromConfig();
+                getCooldownFromConfig();
+            }
+        });
+
+        //Add timewarp pearl
+        registerItem(new CustomProjectileItem("TIMEWARP_PEARL") {
+
+            private int warpDelay;
+            private HashMap<UUID, Location> playerWarpLocations = new HashMap<>();
+
+            private void getWarpDelayFromConfig() {
+                if(main.getConfig().getInt(this.getID() + ".WarpDelay") == 0) { //if a cooldown has been set in config
+                    return;
+                }
+                this.warpDelay = main.getConfig().getInt(this.getID() + ".WarpDelay");
+            }
+
+            @Override
+            public void onUse(ProjectileHitEvent event) {
+
+            }
+
+            @Override
+            public void onHit(EntityDamageByEntityEvent event) {
+
+            }
+
+            @Override
+            public void onThrow(ProjectileLaunchEvent event) {
+                if(!(event.getEntity() instanceof EnderPearl)) {
+                    return;
+                }
+                EnderPearl pearl = (EnderPearl) event.getEntity();
+                if(!(pearl.getShooter() instanceof Player)) {
+                    return;
+                }
+                Player shooter = (Player) pearl.getShooter();
+                if(!isInstanceOf(pearl.getItem())) {
+                    return;
+                }
+                if(main.getCM().hasCooldown(shooter)) {
+                    float expireTimeLeft = (main.getCM().getCooldownExpireTime(shooter) - System.currentTimeMillis()) / 1000f;
+                    shooter.sendMessage(String.format(ChatColor.RED + "You are still on ability item cooldown for %s%.1f%s seconds", ChatColor.YELLOW, expireTimeLeft, ChatColor.RED));
+                    event.setCancelled(true);
+                    return;
+                }
+                //Add cooldown if not infinite
+                if(this.cooldown != -1L) {
+                    main.getCM().addPlayerCooldown(shooter, cooldown * 1000L);
+                }
+                this.playerWarpLocations.put(shooter.getUniqueId(), shooter.getLocation());
+                int beamID = 0;
+                if(Bukkit.getPluginManager().isPluginEnabled("PlayerParticles")) {
+                    PlayerParticlesAPI ppAPI = PlayerParticlesAPI.getInstance();
+                    ppAPI.addActivePlayerParticle(shooter, ParticleEffect.CRIMSON_SPORE, DefaultStyles.NORMAL);
+                    beamID = ppAPI.createFixedParticleEffect(shooter, shooter.getLocation(),  new ParticlePair(shooter.getUniqueId(), ppAPI.getPPlayer(shooter).getFixedParticles().size(), ParticleEffect.REVERSE_PORTAL, DefaultStyles.BEAM, null, null, null, null)).getId();
+                }
+                shooter.sendMessage(String.format("%sYou will be warped back to your original location in %s%s %sseconds", ChatColor.GREEN, ChatColor.YELLOW, warpDelay, ChatColor.GREEN));
+                int finalBeamID = beamID;
+                Bukkit.getScheduler().runTaskLater(main, () -> {
+                    if(playerWarpLocations.get(shooter.getUniqueId()) == null) {
+                        Bukkit.getLogger().info(String.format("Warp location for %s was null", shooter.getDisplayName()));
+                        refundItem(shooter);
+                        return;
+                    }
+                    CustomAbilityEvent customItemEvent = new CustomAbilityEvent(shooter, this);
+                    Bukkit.getPluginManager().callEvent(customItemEvent);
+                    if(customItemEvent.isCancelled()) {
+                        return;
+                    }
+                    shooter.teleport(playerWarpLocations.get(shooter.getUniqueId())); //TODO: Play sound effect
+                    playerWarpLocations.remove(shooter.getUniqueId());
+                    shooter.sendMessage(ChatColor.GREEN + "You were warped back to your original location.");
+                    if(Bukkit.getPluginManager().isPluginEnabled("PlayerParticles")) {
+                        PlayerParticlesAPI ppAPI = PlayerParticlesAPI.getInstance();
+                        ppAPI.addActivePlayerParticle(shooter, ParticleEffect.WITCH, DefaultStyles.SPHERE);
+                        ppAPI.removeFixedEffect(shooter, finalBeamID);
+
+                        Bukkit.getScheduler().runTaskLater(main, () -> {
+                            ppAPI.removeActivePlayerParticles(shooter, DefaultStyles.SPHERE);
+                            ppAPI.removeActivePlayerParticles(shooter, ParticleEffect.CRIMSON_SPORE);
+                        }, 10L);
+                    }
+                }, warpDelay * 20L);
+            }
+
+            @Override
+            public void onRegister() {
+                getWarpDelayFromConfig();
                 getCooldownFromConfig();
             }
         });

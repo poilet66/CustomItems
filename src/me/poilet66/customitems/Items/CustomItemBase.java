@@ -26,6 +26,7 @@ public abstract class CustomItemBase {
     private ItemStack item;
     private CustomItemType type;
     private String customID;
+    protected Long cooldown;
     private boolean enchantGlint;
 
     //Possible parameters
@@ -79,6 +80,13 @@ public abstract class CustomItemBase {
     private boolean getEnchantGlintFromConfig(String itemID) {
         FileConfiguration config = main.getConfig();
         return config.getBoolean(itemID + ".Enchanted", false);
+    }
+
+    protected void getCooldownFromConfig() {
+        if(main.getConfig().getInt(this.getID() + ".Cooldown") == 0) { //if a cooldown has been set in config
+            return;
+        }
+        this.cooldown = main.getConfig().getLong(this.getID() + ".Cooldown");
     }
 
     private ItemStack generateItemFromConfig(String itemID) {

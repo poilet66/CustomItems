@@ -1,7 +1,6 @@
 package me.poilet66.customitems.Command;
 
 import me.poilet66.customitems.CustomItems;
-import me.poilet66.customitems.Items.CustomItemBase;
 import me.poilet66.customitems.Utils.Utils;
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
@@ -9,9 +8,6 @@ import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.util.Vector;
-
-import java.util.Map;
 
 public class GiveItemCommand implements CommandExecutor {
 
@@ -52,21 +48,7 @@ public class GiveItemCommand implements CommandExecutor {
             return true;
         }
         itemToSet.setAmount(amount);
-        //if no empty slots
-        /*if(player.getInventory().firstEmpty() == -1) {
-            player.getLocation().getWorld().dropItemNaturally(player.getLocation(), itemToSet);
-            return true;
-        }*/
         Utils.setAtFirst(player, itemToSet);
-        //player.getInventory().setItem(player.getInventory().firstEmpty(), itemToSet);
-
-        //itemToSet.setAmount(amount);
-        
-        /*if(Utils.setItemAtFirstSlot(player, itemToSet)) { //set slot, send message if couldnt be done TODO: this dont work
-            sender.sendMessage(ChatColor.RED + "Target inventory full.");
-            return true;
-        }*/
-
 
         return true;
     }

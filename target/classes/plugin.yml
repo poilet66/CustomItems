@@ -8,4 +8,7 @@ softdepend: [PlaceholderAPI, MVdWPlaceholderAPI, PlayerParticles]
 commands:
   giveitem:
     usage: /giveitem <id>
-    description: dad
+    description: give user a custom item
+  cireload:
+    usage: /cireload
+    description: reload config

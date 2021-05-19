@@ -7,6 +7,9 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 
+import java.util.HashSet;
+import java.util.Set;
+
 public class Utils {
 
     public static void switchPosition(Entity player1, Entity player2) {
@@ -94,4 +97,14 @@ public class Utils {
         return player1.getLocation().distance(player2.getLocation());
     }
 
+    public final static Set<Player> getPlayersInRadius(Player origin) {
+        Set<Player> ret = new HashSet<>();
+        for(Entity entity : origin.getNearbyEntities(50, 50, 50)) {
+            if(entity instanceof Player) {
+                ret.add((Player) entity);
+            }
+        }
+        ret.add(origin);
+        return ret;
+    }
 }
