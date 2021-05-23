@@ -3,7 +3,7 @@ main: me.poilet66.customitems.CustomItems
 version: 1.0.0
 api-version: 1.16
 author: poilet66
-softdepend: [PlaceholderAPI, MVdWPlaceholderAPI, PlayerParticles]
+softdepend: [PlaceholderAPI, MVdWPlaceholderAPI, PlayerParticles, WorldGuard]
 
 commands:
   giveitem:
@@ -12,3 +12,6 @@ commands:
   cireload:
     usage: /cireload
     description: reload config
+  ciinvite:
+    usage: /ciinvite
+    description: accept/deny a request item invite

@@ -1,3 +1,4 @@
+InviteLength: 15
 #SWITCHER custom item
 SWITCHER:
   Material: SNOWBALL
@@ -26,3 +27,23 @@ TIMEWARP_PEARL:
   WarpDelay: 15
   #Whether the item should have an enchant glint
   Enchanted: true
+CORRUPTED_PEARL:
+  Material: ENDER_PEARL
+  DisplayName: "&5&lTimewarp Pearl"
+  Lore:
+    - "&7Throw this pearl and be"
+    - "&7teleported back to your throw"
+    - "&7point after &615 &7seconds"
+  Cooldown: 30
+  Enchanted: false
+SPIRIT_LINK:
+  Material: IRON_INGOT
+  DisplayName: "&b&lSpirit Link"
+  Lore:
+    - "&7Right click any player to"
+    - "&7link your soul to theirs"
+    - "&7and receive a buff while near them"
+  Cooldown: 30
+  Enchanted: true
+  MaxDistance: 30D
+

@@ -1,16 +1,14 @@
 package me.poilet66.customitems;
 
 import dev.esophose.playerparticles.api.PlayerParticlesAPI;
-import dev.esophose.playerparticles.particles.FixedParticleEffect;
-import dev.esophose.playerparticles.particles.PPlayer;
 import dev.esophose.playerparticles.particles.ParticleEffect;
 import dev.esophose.playerparticles.particles.ParticlePair;
 import dev.esophose.playerparticles.styles.DefaultStyles;
-import dev.esophose.playerparticles.styles.ParticleStyle;
 import me.poilet66.customitems.Items.CustomAttackItem;
 import me.poilet66.customitems.Items.CustomItemBase;
 import me.poilet66.customitems.Items.CustomProjectileItem;
 import me.poilet66.customitems.API.CustomAbilityEvent;
+import me.poilet66.customitems.Items.CustomRequestItem;
 import me.poilet66.customitems.Utils.Utils;
 import org.bukkit.*;
 import org.bukkit.enchantments.Enchantment;
@@ -20,10 +18,15 @@ import org.bukkit.entity.Snowball;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.ProjectileHitEvent;
 import org.bukkit.event.entity.ProjectileLaunchEvent;
+import org.bukkit.event.player.PlayerInteractAtEntityEvent;
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.persistence.PersistentDataType;
+import org.bukkit.potion.PotionEffect;
+import org.bukkit.potion.PotionEffectType;
+import org.bukkit.scheduler.BukkitRunnable;
+import org.bukkit.util.Vector;
 
 import java.util.*;
 
@@ -143,6 +146,10 @@ public class ItemRegister {
                     refundItem(shooter);
                     return;
                 }
+                /*if(!Utils.canBothPlayersPVP(victim, shooter)) {
+                    shooter.sendMessage(ChatColor.RED + "You can't do that in this area.");
+                    return;
+                }*/
                 //Call ability event
                 CustomAbilityEvent customItemEvent = new CustomAbilityEvent(shooter, this);
                 Bukkit.getPluginManager().callEvent(customItemEvent);
@@ -305,6 +312,156 @@ public class ItemRegister {
             }
         });
 
+        //Add corrupted pearl
+        registerItem(new CustomProjectileItem("CORRUPTED_PEARL") {
+
+            @Override
+            public void onUse(ProjectileHitEvent event) {
+
+            }
+
+            @Override
+            public void onHit(EntityDamageByEntityEvent event) {
+                if(!(event.getDamager() instanceof EnderPearl)) {
+                    return;
+                }
+                EnderPearl pearl = (EnderPearl) event.getDamager();
+                if(!(pearl.getShooter() instanceof Player)) {
+                    return;
+                }
+                Player shooter = (Player) pearl.getShooter();
+                if(!isInstanceOf(pearl.getItem())) {
+                    return;
+                }
+                shooter.addPotionEffect(new PotionEffect(PotionEffectType.INCREASE_DAMAGE, 25, 2));
+                shooter.addPotionEffect(new PotionEffect(PotionEffectType.SLOW, 200, 10));
+            }
+
+            @Override
+            public void onThrow(ProjectileLaunchEvent event) {
+                if(!(event.getEntity() instanceof EnderPearl)) {
+                    return;
+                }
+                EnderPearl pearl = (EnderPearl) event.getEntity();
+                if(!(pearl.getShooter() instanceof Player)) {
+                    return;
+                }
+                Player shooter = (Player) pearl.getShooter();
+                if(!isInstanceOf(pearl.getItem())) {
+                    return;
+                }
+                if(main.getCM().hasCooldown(shooter)) {
+                    float expireTimeLeft = (main.getCM().getCooldownExpireTime(shooter) - System.currentTimeMillis()) / 1000f;
+                    shooter.sendMessage(String.format(ChatColor.RED + "You are still on ability item cooldown for %s%.1f%s seconds", ChatColor.YELLOW, expireTimeLeft, ChatColor.RED));
+                    event.setCancelled(true);
+                    return;
+                }
+                //Add cooldown if not infinite
+                if(this.cooldown != -1L) {
+                    main.getCM().addPlayerCooldown(shooter, cooldown * 1000L);
+                }
+            }
+
+            @Override
+            public void onRegister() {
+                getCooldownFromConfig(); //TODO: Make this a default in CustomItemBase
+            }
+        });
+
+        //Add Spirit Link
+        registerItem(new CustomRequestItem("SPIRIT_LINK") {
+
+            private HashMap<UUID, UUID> linkedPlayerMap = new HashMap<>(); //List<Pair<UUID,UUID>> makes more sense?
+            private double maxDistance;
+
+            private void getMaxDistanceFromConfig() {
+                if(main.getConfig().getDouble(this.getID() + ".MaxDistance") == 0) { //if a max distance has been set in config
+                    return;
+                }
+                this.maxDistance = main.getConfig().getDouble(this.getID() + ".MaxDistance");
+            }
+
+            @Override
+            public void onInteract(PlayerInteractAtEntityEvent event) { //TODO: Link to animals?
+                Player interactor = event.getPlayer();
+                if(!interactor.isSneaking()) {
+                    return;
+                }
+                if(!(event.getRightClicked() instanceof Player)) {
+                    interactor.sendMessage(ChatColor.RED + "You cannot link with that.");
+                    return;
+                }
+                Player target = (Player) event.getRightClicked();
+                if(main.getCM().hasCooldown(interactor)) {
+                    float expireTimeLeft = (main.getCM().getCooldownExpireTime(interactor) - System.currentTimeMillis()) / 1000f;
+                    interactor.sendMessage(String.format(ChatColor.RED + "You are still on ability item cooldown for %s%.1f%s seconds", ChatColor.YELLOW, expireTimeLeft, ChatColor.RED));
+                    event.setCancelled(true);
+                    return;
+                }
+                if(main.getCM().hasCooldown(interactor)) {
+                    float expireTimeLeft = (main.getCM().getCooldownExpireTime(interactor) - System.currentTimeMillis()) / 1000f;
+                    interactor.sendMessage(String.format(ChatColor.RED + "You are still on ability item cooldown for %s%.1f%s seconds", ChatColor.YELLOW, expireTimeLeft, ChatColor.RED));
+                    event.setCancelled(true);
+                    return;
+                }
+                if(linkedPlayerMap.containsKey(interactor) || linkedPlayerMap.containsValue(interactor)) {
+                    interactor.sendMessage(ChatColor.RED + "You are already linked with another player");
+                    return;
+                }
+                if(linkedPlayerMap.containsKey(target) || linkedPlayerMap.containsValue(target)) {
+                    interactor.sendMessage(ChatColor.RED + "You are already linked with another player");
+                    return;
+                }
+                this.addRequest(interactor, target);
+                //Add cooldown if not infinite
+                if(this.cooldown != -1L) {
+                    main.getCM().addPlayerCooldown(interactor, cooldown * 1000L);
+                }
+            }
+
+            @Override
+            public void onAccept(UUID sender, UUID receiver) {
+                Player senderPlayer = Bukkit.getPlayer(sender);
+                Player targetPlayer = Bukkit.getPlayer(receiver);
+                double finalMaxDistance = this.maxDistance;
+                senderPlayer.sendMessage(String.format(ChatColor.GREEN + "Spirit Link started with %s", targetPlayer.getDisplayName()));
+                targetPlayer.sendMessage(String.format(ChatColor.GREEN + "Spirit Link started with %s", senderPlayer.getDisplayName()));
+
+                new BukkitRunnable() {
+
+                    @Override
+                    public void run() { //TODO: Adapt this to be a manager, not single item
+                        if(!targetPlayer.isOnline()) {
+                            if(senderPlayer.isOnline()) {
+                                senderPlayer.sendMessage(String.format("%s logged off and the link broke", targetPlayer.getDisplayName()));
+                            }
+                            this.cancel();
+                        }
+                        if(!senderPlayer.isOnline()) {
+                            if(targetPlayer.isOnline()) {
+                                targetPlayer.sendMessage(String.format("%s logged off and the link broke", senderPlayer.getDisplayName()));
+                            }
+                            this.cancel();
+                        }
+                        if(Math.abs(senderPlayer.getLocation().distance(targetPlayer.getLocation())) > finalMaxDistance) {
+                            senderPlayer.sendMessage(String.format(ChatColor.RED + "You exceeded the distance of %s and the link broke", finalMaxDistance));
+                            targetPlayer.sendMessage(String.format(ChatColor.RED + "You exceeded the distance of %s and the link broke", finalMaxDistance));
+                            this.cancel();
+                        }
+                        Utils.drawLineBetweenTwoPlayers(senderPlayer, targetPlayer, maxDistance);
+                    }
+
+                }.runTaskTimer(main, 0L, 5L);
+
+                linkedPlayerMap.put(sender, receiver);
+            }
+
+            @Override
+            public void onRegister() {
+                getCooldownFromConfig();
+                getMaxDistanceFromConfig();
+            }
+        });
 
     }
 

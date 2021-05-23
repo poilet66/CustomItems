@@ -24,4 +24,6 @@ public abstract class CustomProjectileItem extends CustomItemBase{
     public abstract void onHit(EntityDamageByEntityEvent event);
 
     public abstract  void onThrow(ProjectileLaunchEvent event);
+
+
 }

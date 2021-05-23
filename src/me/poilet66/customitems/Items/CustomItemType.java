@@ -4,5 +4,6 @@ public enum CustomItemType {
     INTERACT_ITEM,
     ATTACK_ITEM,
     PROJECTILE,
+    REQUESTABLE,
     WEARABLE;
 }

@@ -13,7 +13,6 @@ import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.persistence.PersistentDataType;
-import org.bukkit.plugin.Plugin;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -21,7 +20,7 @@ import java.util.Objects;
 
 public abstract class CustomItemBase {
 
-    private final CustomItems main = (CustomItems) Bukkit.getPluginManager().getPlugin("CustomItems"); //TODO: HeebieJeebies
+    protected final CustomItems main = (CustomItems) Bukkit.getPluginManager().getPlugin("CustomItems"); //TODO: HeebieJeebies
 
     private ItemStack item;
     private CustomItemType type;
@@ -98,14 +97,12 @@ public abstract class CustomItemBase {
             ItemStack ret = new ItemStack(Objects.requireNonNull(Material.matchMaterial(config.getString(itemID + ".Material"))));
             ItemMeta meta = ret.getItemMeta();
             if(config.getString(itemID + ".DisplayName") != null) {
-                //meta.setDisplayName(ChatColor.translateAlternateColorCodes('&', config.getString(itemID + ".DisplayName")));
                 meta.setDisplayName(ChatColor.RESET + ChatColor.translateAlternateColorCodes('&', config.getString(itemID + ".DisplayName")));
             }
             if(config.getStringList(itemID + ".Lore") != null) {
                 List<String> formattedLore = new ArrayList<>();
                 for(String line : config.getStringList(itemID + ".Lore")) {
                     formattedLore.add(ChatColor.RESET + ChatColor.translateAlternateColorCodes('&', line));
-                    //formattedLore.add(ChatColor.translateAlternateColorCodes('&', line));
                 }
                 meta.setLore(formattedLore);
             }
@@ -134,7 +131,7 @@ public abstract class CustomItemBase {
         player.getInventory().setItemInMainHand(generateItemFromConfig(this.customID));
     }
 
-    protected void consumeItem(Player player) {
+    protected void consumeItem(Player player) { //TODO: Could this be used to dupe
         if(!isInstanceOf(player.getInventory().getItemInMainHand())) {
             return;
         }
